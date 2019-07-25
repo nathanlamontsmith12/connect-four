@@ -6,3 +6,20 @@
 body {
 	background: slategray;
 }
+
+#container {
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#start-screen {
+	display: none;
+}
+
+main {
+	height: 80vh;
+	width: 90%;
+	background: aliceblue;
+}
