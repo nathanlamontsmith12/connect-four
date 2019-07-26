@@ -11,14 +11,17 @@ const app = {
 	player2: "yellow",
 	currPlayer: 1,
 	active: false,
+	overlay: null,
 	firstGame: true,
-	animationOn: false,
+	overlayAnimationId: null,
+	dropAnimationOn: false,
 	palette: ["red", "orange", "yellow", "green", "blue", "purple", "black"],
 	colStarts: [],
 	rowStarts: [],
 	diagRightStarts: [],
 	diagLeftStarts: [],
 	init(){
+		this.active = true;
 		this.resetBoard();
 
 		// only do ONCE: 
@@ -26,6 +29,7 @@ const app = {
 			this.initStarts();
 			this.printBoard();
 			this.activateBoard();
+			this.activateOverlayAnimation();
 			this.firstGame = false;			
 		}
 
@@ -57,13 +61,10 @@ const app = {
 				this.handleInput(divClicked);
 			});
 			space.addEventListener("mouseover", (evt)=>{
-				console.log("mouseover:")
-				console.log(evt);
-				this.setOverlay();
+				const divEntered = evt.target; 
+				this.setOverlay(divEntered);
 			});
-			space.addEventListener("mouseout", (evt)=>{
-				console.log("mouseout:")
-				console.log(evt);
+			space.addEventListener("mouseout", ()=>{
 				this.clearOverlay();
 			})
 		})
@@ -71,22 +72,26 @@ const app = {
 	resetBoard(){
 		this.board = [];
 
+		let index = 0; 
+
 		for (let y = 1; y <= 6; y++){
 			for (let x = 1; x <= 7; x++) {
 				this.board.push({
 					col: x,
 					row: y,
 					owned: 0,
-					id: `s-${x}-${y}`
-				})
+					id: `s-${x}-${y}`,
+					index: index
+				});
+
+				index++;
 			}
 		}
-
-		this.board.forEach((space, i)=>{
-			space.index = i;
-		})
 	},
 	printBoard(){
+
+		let index = 0; 
+
 		for (let y = 1; y <= 6; y++){
 			const newRow = document.createElement("div");
 			newRow.classList.add("row");
@@ -95,13 +100,20 @@ const app = {
 			for (let x = 1; x <= 7; x++){
 				const newSpace = document.createElement("div");
 				newSpace.classList.add("space");
+				newSpace.classList.add(`col-${x}`)
 				newSpace.dataset.col = x;
+				newSpace.dataset.index = index;
 				newSpace.id = `s-${x}-${y}`;
 				newRow.appendChild(newSpace);
+				index++;
 			}
 
 			board.appendChild(newRow);
 		}
+	},
+	renderOverlay(){
+		console.log("renderOverlay fired!")
+		console.log(this.overlay)
 	},
 	renderBoard(){
 		this.board.forEach(space => {
@@ -180,11 +192,10 @@ const app = {
 		console.log(pattern);
 	},
 	newGame(){
-		this.resetBoard();
-		this.renderBoard();
-		this.turn = 1; 
+		this.turn = 0; 
 		this.currPlayer = 1;
 		this.active = true;
+		this.init();
 	},
 	handleInput(divSelected){
 		if (!this.active){
@@ -192,15 +203,19 @@ const app = {
 			return false;
 		}
 
-		const column = parseInt(divSelected.dataset.col);
-		const validSelection = this.insertSelection(column);
+		if (!this.dropAnimationOn) {
+			const column = parseInt(divSelected.dataset.col);
+			const validSelection = this.insertSelection(column);
 
-		if (validSelection){
-			this.animationOn = true; 
-			this.animation(validSelection.col - 1, validSelection.index);
+			if (validSelection){
+				this.dropAnimationOn = true; 
+				this.animation(validSelection.col - 1, validSelection.index);
+			} else {
+				console.log("Invalid Selection! Try again, Player" + this.currPlayer + ".");
+				return false;
+			}			
 		} else {
-			console.log("Invalid Selection! Try again, Player" + this.currPlayer + ".");
-			return false;
+			console.log("animation blocked")
 		}
 	},
 	insertSelection(column){
@@ -222,7 +237,7 @@ const app = {
 		return selection;
 	},
 	finishTurn(){
-		this.animationOn = false; 
+		this.dropAnimationOn = false; 
 		this.renderBoard();
 		this.checkWin(); 
 		this.changeTurn();
@@ -248,11 +263,18 @@ const app = {
 			}, 20)
 		}
 	},
-	setOverlay(){
-		console.log("setOverlay called!")
+	setOverlay(target){
+		const column = parseInt(target.dataset.col);
+		this.overlay = column;
 	},
 	clearOverlay(){
-		console.log("clearOverlay called!")
+		this.overlay = null;
+	},
+	activateOverlayAnimation(){
+		this.overlayAnimationId = window.requestAnimationFrame(renderOverlay);
+	},
+	deactivateOverlayAnimation(){
+		window.cancelAnimationFrame(this.overlayAnimationId);
 	}
 }
 
@@ -271,10 +293,18 @@ const player2 = document.getElementById("player-two");
 
 // global functions ----- 
 
+function renderOverlay(){
 
+	if(app.active && !app.dropAnimationOn) {
 
-// event listeners ----- 
+		if(app.overlay) {
+			app.renderOverlay();
+		} else {
+			app.renderBoard();
+		}
 
+	}
 
-
+	window.requestAnimationFrame(renderOverlay)
+}
 
