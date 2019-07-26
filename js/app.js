@@ -19,12 +19,11 @@ const app = {
 		this.resetBoard();
 		this.initStarts();
 		this.printBoard();
-		this.activate();
+		this.activateBoard();
 		this.renderBoard();
 		this.active = true;
 	},
 	initStarts(){
-
 		for (let i = 0; i < 42; i++){
 			if (i <= 20) {
 				this.colStarts.push(i);
@@ -41,18 +40,17 @@ const app = {
 			}
 		}
 	},
-	activate(){
+	activateBoard(){
 		const allSpaces = document.querySelectorAll(".space");
 		allSpaces.forEach(space => {
 			space.addEventListener("click", (evt)=>{
-				const columnSelected = parseInt(evt.currentTarget.dataset.col);
-				this.handleInput(columnSelected);
+				const divClicked = evt.target;
+				this.handleInput(divClicked);
 			})
 		})
 	},
 	// board methods: 
 	resetBoard(){
-
 		this.board = [];
 
 		for (let y = 1; y <= 6; y++){
@@ -88,12 +86,12 @@ const app = {
 		
 			let fillColor = "lightgray"; 
 
-			if (space.owned === 1) {
-				fill = this.player1;
+			if (space.owned == 1) {
+				fillColor = this.player1;
 			} 
 
-			if (space.owned === 2) {
-				fill = this.player2;
+			if (space.owned == 2) {
+				fillColor = this.player2;
 			} 
 
 			const thisSpaceDiv = document.querySelector(`#s-${space.col}-${space.row}`);
@@ -124,7 +122,6 @@ const app = {
 		}
 	},
 	checkWinCondition(startsArr, skipNum){
-
 		for (let i = 0; i < startsArr.length; i++){
 
 			const index = startsArr[i];
@@ -169,37 +166,39 @@ const app = {
 		this.active = true;
 	},
 	// input handling: 
-	handleInput(column){
-
-		// return false if input is invalid 
+	handleInput(divSelected){
 
 		if (!this.active){
-			console.log("Game has ended. Start new game to keep playing!");
+			console.log("Game is over! Start a new game to continue playing...")
 			return false;
 		}
 
+		const column = parseInt(divSelected.dataset.col);
+		const isSelectionValid = this.insertSelection(column);
+
+		if (isSelectionValid){
+			this.renderBoard(); 
+			this.checkWin(); 
+			this.changeTurn(); 
+		} else {
+			console.log("Invalid Selection! Try again, Player" + this.currPlayer + ".");
+			return false;
+		}
+	},
+	insertSelection(column){
 		const lowestOccupiedIndex = this.board.findIndex(space => space.col == column && space.owned > 0);
 		let index; 
 
 		if(lowestOccupiedIndex < 0){
 			index = column + 34;
 		} else if (lowestOccupiedIndex < 6) {
-			console.log("Column completely occupied!");
 			return false;
 		} else {
 			index = lowestOccupiedIndex - 7;
 		}
 
-		console.log(index);
-
 		this.board[index].owned = this.currPlayer;
-		const color = this[`player` + this.currPlayer];
-		const targetSpaceDiv = document.getElementById(this.board[index].id);
-		targetSpaceDiv.style.background = color;
-
-		this.checkWin();
-		this.changeTurn(); 
-
+		return true;
 	},
 	changeTurn(){
 		this.turn++;
