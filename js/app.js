@@ -1,39 +1,64 @@
 console.log("Connect 4")
 
 
-// palette 
-
-const palette = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"]
-
-
 // game logic ----- 
 
 const app = {
 	turn: 1,
 	board: [],
-	player1: null,
-	player2: null,
+	player1: "red",
+	player2: "yellow",
 	currPlayer: 1,
+	palette: ["red", "orange", "yellow", "green", "blue", "purple", "black"],
 	// board methods: 
 	resetBoard(){
 
 		this.board = [];
 
-		for (let i = 1; i <= 6; i++){
-			for (let j = 1; j <= 7; j++) {
+		for (let y = 1; y <= 6; y++){
+			for (let x = 1; x <= 7; x++) {
 				this.board.push({
-					x: j,
-					y: i,
-					owned: 0
+					col: x,
+					row: y,
+					owned: 0,
+					id: `s-${x}-${y}`
 				})
 			}
 		}
 	},
-	makeBoard(){
+	printBoard(){
+		for (let y = 1; y <= 6; y++){
+			const newRow = document.createElement("div");
+			newRow.classList.add("row");
+			newRow.dataset.row = y;
 
+			for (let x = 1; x <= 7; x++){
+				const newSpace = document.createElement("div");
+				newSpace.classList.add("space");
+				newSpace.dataset.col = x;
+				newSpace.id = `s-${x}-${y}`;
+				newRow.appendChild(newSpace);
+			}
+
+			board.appendChild(newRow);
+		}
 	},
-	updateBoard(){
+	renderBoard(){
+		this.board.forEach(space => {
+		
+			let fillColor = "white"; 
 
+			if (space.owned === 1) {
+				fill = this.player1;
+			} 
+
+			if (space.owned === 2) {
+				fill = this.player2;
+			} 
+
+			const thisSpaceDiv = document.querySelector(`#s-${space.col}-${space.row}`);
+			thisSpaceDiv.style.background = fillColor;
+		})
 	},
 	// win condition checking: 
 	checkWins(){
@@ -71,6 +96,14 @@ const app = {
 
 // cached elements ----- 
 
+const container = document.getElementById("container");
+const startScreen = document.getElementById("start-screen");
+const startBtn = document.getElementById("start");
+const gameArea = document.getElementById("game-area");
+const messageDisplay = document.getElementById("message-display");
+const board = document.getElementById("game-board");
+const player1 = document.getElementById("player-one");
+const player2 = document.getElementById("player-two");
 
 
 // global functions ----- 
