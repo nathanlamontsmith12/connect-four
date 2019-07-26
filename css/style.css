@@ -15,6 +15,27 @@ body {
 }
 
 #start-screen {
+	display: flex;
+	flex-direction: column;
+	width: 90%;
+}
+
+#start-screen div {
+	display: flex;
+	justify-content: space-around;
+}
+
+#start-screen div div {
+	display: flex;
+	flex-direction: column;
+}
+
+#start {
+	margin-top: 40px;
+	align-self: center;
+}
+
+#game-area{
 	display: none;
 }
 
@@ -22,6 +43,12 @@ body {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
+}
+
+#message-display {
+	display: none;
+	justify-content: center;
+	align-items: center;
 }
 
 .row {
@@ -38,6 +65,9 @@ body {
 }
 
 main {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	height: 80vh;
 	width: 90%;
 }

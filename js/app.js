@@ -1,5 +1,36 @@
 console.log("Connect 4")
 
+// global vars ----- 
+
+const colors = ["", "red", "orange", "yellow", "green", "blue", "purple"]
+
+const paletteMap = {
+	red: {
+		fill: "rgba(255, 0, 0, 1)",
+		light: "rgba(255, 0, 0, 0.1)"
+	},
+	orange: {
+		fill: "rgba(255, 165, 0, 1)",
+		light: "rgba(255, 165, 0, 0.1)"
+	},
+	yellow: {
+		fill: "rgba(255, 255, 0, 1)",
+		light: "rgba(255, 255, 0, 0.1)"
+	},
+	green: {
+		fill: "rgba(0, 128, 0, 1)",
+		light: "rgba(0, 128, 0, 0.1)"
+	}, 
+	blue: {
+		fill: "rgba(0, 0, 205, 1)",
+		light: "rgba(0, 0, 205, 0.1)"
+	},
+	purple: {
+		fill: "rgba(128, 0, 128, 1)",
+		light: "rgba(128, 0, 128, 0.1)"
+	}
+}
+
 
 // game logic ----- 
 
@@ -7,18 +38,17 @@ const app = {
 	turn: 0,
 	board: [],
 	occupied: 0,
-	unoccupied: "white",
-	player1: "rgba(255, 0, 0, 1)",
-	player2: "rgba(255, 255, 0, 1)",
-	player1L: "rgba(255, 0, 0, 0.1)",
-	player2L: "rgba(255, 255, 0, 0.1)",
+	emptyColor: "white",
+	player1: null,
+	player2: null,
+	player1L: null,
+	player2L: null,
 	currPlayer: 1,
 	active: false,
 	overlay: null,
 	firstGame: true,
 	overlayAnimationId: null,
 	dropAnimationOn: false,
-	palette: ["red", "orange", "yellow", "green", "blue", "purple", "black"],
 	colStarts: [],
 	rowStarts: [],
 	diagRightStarts: [],
@@ -128,7 +158,7 @@ const app = {
 	renderBoard(){
 		this.board.forEach(space => {
 		
-			let fillColor = this.unoccupied; 
+			let fillColor = this.emptyColor; 
 
 			if (space.owner == 1) {
 				fillColor = this.player1;
@@ -285,12 +315,11 @@ const app = {
 		} else {
 			const color = this["player" + this.currPlayer];
 			const passingDiv = document.getElementById(this.board[currIndex].id);
-			const unoccupiedColor = this.unoccupied; 
 
 			passingDiv.style.background = color;
 
 			setTimeout(()=>{
-				passingDiv.style.background = unoccupiedColor;
+				passingDiv.style.background = emptyColor;
 				return this.animation(currIndex + 7, maxIndex);
 			}, 20)
 		}
@@ -307,6 +336,16 @@ const app = {
 	},
 	deactivateOverlayAnimation(){
 		window.cancelAnimationFrame(this.overlayAnimationId);
+	},
+	handleColorSelectionPlayer1(evt){
+		console.log("handleColorSelection Player 1 fired!");
+		console.log("Player 1 chose:")
+		console.log(evt.target.value);
+	},
+	handleColorSelectionPlayer2(evt){
+		console.log("handleColorSelection Player 2 fired!");
+		console.log("Player 2 chose:")
+		console.log(evt.target.value);
 	}
 }
 
@@ -321,6 +360,47 @@ const messageDisplay = document.getElementById("message-display");
 const board = document.getElementById("game-board");
 const player1 = document.getElementById("player-one");
 const player2 = document.getElementById("player-two");
+
+
+// start screen init ----- 
+
+colors.forEach(color => {
+	const optionP1 = document.createElement("option");
+	const optionP2 = document.createElement("option");
+
+	if (!color) {
+		optionP1.textContent = "-- Please Select Color --";
+		optionP2.textContent = "-- Please Select Color --";
+
+	} else {
+		optionP1.textContent = color;
+		optionP2.textContent = color;		
+	}
+
+	optionP1.value = color;
+	optionP1.classList.add("colorChoice");
+	optionP1.dataset.player = "one";
+
+	optionP2.value = color;
+	optionP2.classList.add("colorChoice");
+	optionP2.dataset.player = "two";
+
+	// append: 
+	player1.appendChild(optionP1);
+	player2.appendChild(optionP2);
+})
+
+player1.addEventListener("change", (evt)=>{
+	app.handleColorSelectionPlayer1(evt);
+});
+
+player2.addEventListener("change", (evt)=>{
+	app.handleColorSelectionPlayer2(evt);
+});
+
+start.addEventListener("click", ()=>{
+	app.startGame();
+});
 
 
 // global functions ----- 
