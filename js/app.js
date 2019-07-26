@@ -4,13 +4,14 @@ console.log("Connect 4")
 // game logic ----- 
 
 const app = {
-	turn: 1,
+	turn: 0,
 	board: [],
 	unoccupied: "lightgray",
 	player1: "red",
 	player2: "yellow",
 	currPlayer: 1,
 	active: false,
+	firstGame: true,
 	animationOn: false,
 	palette: ["red", "orange", "yellow", "green", "blue", "purple", "black"],
 	colStarts: [],
@@ -19,11 +20,17 @@ const app = {
 	diagLeftStarts: [],
 	init(){
 		this.resetBoard();
-		this.initStarts();
-		this.printBoard();
-		this.activateBoard();
+
+		// only do ONCE: 
+		if (this.firstGame) {
+			this.initStarts();
+			this.printBoard();
+			this.activateBoard();
+			this.firstGame = false;			
+		}
+
 		this.renderBoard();
-		this.active = true;
+		this.changeTurn();
 	},
 	initStarts(){
 		for (let i = 0; i < 42; i++){
@@ -48,6 +55,16 @@ const app = {
 			space.addEventListener("click", (evt)=>{
 				const divClicked = evt.target;
 				this.handleInput(divClicked);
+			});
+			space.addEventListener("mouseover", (evt)=>{
+				console.log("mouseover:")
+				console.log(evt);
+				this.setOverlay();
+			});
+			space.addEventListener("mouseout", (evt)=>{
+				console.log("mouseout:")
+				console.log(evt);
+				this.clearOverlay();
 			})
 		})
 	}, 
@@ -175,17 +192,15 @@ const app = {
 			return false;
 		}
 
-		if (!this.animationOn){
-			const column = parseInt(divSelected.dataset.col);
-			const validSelection = this.insertSelection(column);
+		const column = parseInt(divSelected.dataset.col);
+		const validSelection = this.insertSelection(column);
 
-			if (validSelection){
-				this.animationOn = true; 
-				this.animation(validSelection.col - 1, validSelection.index);
-			} else {
-				console.log("Invalid Selection! Try again, Player" + this.currPlayer + ".");
-				return false;
-			}
+		if (validSelection){
+			this.animationOn = true; 
+			this.animation(validSelection.col - 1, validSelection.index);
+		} else {
+			console.log("Invalid Selection! Try again, Player" + this.currPlayer + ".");
+			return false;
 		}
 	},
 	insertSelection(column){
@@ -223,7 +238,6 @@ const app = {
 		} else {
 			const color = this["player" + this.currPlayer];
 			const passingDiv = document.getElementById(this.board[currIndex].id);
-			console.log(passingDiv);
 			const unoccupiedColor = this.unoccupied; 
 
 			passingDiv.style.background = color;
@@ -233,6 +247,12 @@ const app = {
 				return this.animation(currIndex + 7, maxIndex);
 			}, 20)
 		}
+	},
+	setOverlay(){
+		console.log("setOverlay called!")
+	},
+	clearOverlay(){
+		console.log("clearOverlay called!")
 	}
 }
 
