@@ -9,9 +9,38 @@ const app = {
 	player1: "red",
 	player2: "yellow",
 	currPlayer: 1,
+	active: false,
 	palette: ["red", "orange", "yellow", "green", "blue", "purple", "black"],
+	colStarts: [],
+	rowStarts: [],
+	diagRightStarts: [],
+	diagLeftStarts: [],
+	init(){
+		this.initBoard();
+		this.initStarts();
+		this.printBoard();
+		this.active = true;
+	},
+	initStarts(){
+
+		for (let i = 0; i < 42; i++){
+			if (i <= 20) {
+				this.colStarts.push(i);
+			}
+
+			if (i % 7 === 0) {
+				for (let j = i; j <= i + 3; j++) {
+					this.rowStarts.push(j);
+					if(i <= 14){
+						this.diagRightStarts.push(j);
+						this.diagLeftStarts.push(j + 3);
+					}
+				}
+			}
+		}
+	},
 	// board methods: 
-	resetBoard(){
+	initBoard(){
 
 		this.board = [];
 
@@ -61,27 +90,65 @@ const app = {
 		})
 	},
 	// win condition checking: 
-	checkWins(){
+	checkWin(){
+		const colsWin = this.checkWinCondition(this.colStarts, 7);
+		const rowsWin = this.checkWinCondition(this.rowStarts, 1);
+		const diagsRightWin = this.checkWinCondition(this.diagRightStarts, 8);
+		const diagsLeftWin = this.checkWinCondition(this.diagLeftStarts, 6);
 
-		// check Columns: 
-		const colsWin = this.checkWinCondition([], 0);
+		if(colsWin){
+			this.gameOver(colsWin);
+		}
 
-		// check Rows: 
-		const rowsWin = this.checkWinCondition([], 0);
+		if(rowsWin){
+			this.gameOver(rowsWin);
+		}
 
-		// check Diagonals: 
-		const diagsWin = this.checkWinCondition([], 0);
+		if(diagsRightWin){
+			this.gameOver(diagsRightWin);
+		}
+
+		if(diagsLeftWin){
+			this.gameOver(diagsLeftWin);
+		}
 	},
 	checkWinCondition(startsArr, skipNum){
 
-		startsArr.forEach(start => {
-			// maybeWinner for the start 
-			// count = 1 
-			// loop over this.board based on skipNum and check if next is same player; if yes, increment count 
-			// if count >= 4 then WINNER 
-			// return 0, 1, or 2 
-		})
+		for (let i = 0; i < startsArr.length; i++){
 
+			const index = startsArr[i];
+			const maybeWinner = this.board[index].owned;
+			const winningPattern = [];
+
+			if (!maybeWinner){
+				continue;
+			}
+
+			winningPattern.push(index);
+
+			let count = 1;
+			let skip = skipNum;
+
+			for (let j = 1; j <= 3; j++){
+				if (this.board[index].owned === this.board[index + skip].owned){
+					winningPattern.push(index + skip);
+					count++;
+					skip += skipNum;
+				}
+			}
+
+			if (count >= 4) {
+				return winningPattern;
+			} 
+		}
+
+		return false;
+	},
+	gameOver(pattern){
+		this.active = false;
+		console.log("GAME OVER")
+		console.log("PLAYER " + currPlayer + " WINS!")
+		console.log(pattern);
 	},
 	// input handling: 
 	handleInput(){
