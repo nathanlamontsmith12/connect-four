@@ -16,9 +16,11 @@ const app = {
 	diagRightStarts: [],
 	diagLeftStarts: [],
 	init(){
-		this.initBoard();
+		this.resetBoard();
 		this.initStarts();
 		this.printBoard();
+		this.activate();
+		this.renderBoard();
 		this.active = true;
 	},
 	initStarts(){
@@ -39,8 +41,16 @@ const app = {
 			}
 		}
 	},
+	activate(){
+		const allSpaces = document.querySelectorAll(".space");
+		allSpaces.forEach(space => {
+			space.addEventListener("click", (evt)=>{
+				this.handleInput(evt.currentTarget);
+			})
+		})
+	},
 	// board methods: 
-	initBoard(){
+	resetBoard(){
 
 		this.board = [];
 
@@ -75,7 +85,7 @@ const app = {
 	renderBoard(){
 		this.board.forEach(space => {
 		
-			let fillColor = "white"; 
+			let fillColor = "lightgray"; 
 
 			if (space.owned === 1) {
 				fill = this.player1;
@@ -147,16 +157,40 @@ const app = {
 	gameOver(pattern){
 		this.active = false;
 		console.log("GAME OVER")
-		console.log("PLAYER " + currPlayer + " WINS!")
+		console.log("PLAYER " + this.currPlayer + " WINS!")
 		console.log(pattern);
 	},
+	newGame(){
+		this.resetBoard();
+		this.renderBoard();
+		this.turn = 1; 
+		this.currPlayer = 1;
+		this.active = true;
+	},
 	// input handling: 
-	handleInput(){
+	handleInput(spaceDiv){
 
-		this.changeTurn();
+		if (!this.active){
+			console.log("Game has ended. Start new game to keep playing!");
+			return;
+		}
+
+		const index = this.board.findIndex(space => space.id == spaceDiv.id);
+
+		if (this.board[index].owned === 0){
+			this.board[index].owned = this.currPlayer;
+			const color = this[`player` + this.currPlayer];
+			spaceDiv.style.background = color;
+			this.checkWin();
+			this.changeTurn();			
+		} else {
+			console.log("THAT SPACE IS OCCUPIED")
+		}
+
 	},
 	changeTurn(){
-
+		this.turn++;
+		this.currPlayer = (this.turn % 2) || 2;
 	}
 }
 
