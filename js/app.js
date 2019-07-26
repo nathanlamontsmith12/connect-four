@@ -45,7 +45,8 @@ const app = {
 		const allSpaces = document.querySelectorAll(".space");
 		allSpaces.forEach(space => {
 			space.addEventListener("click", (evt)=>{
-				this.handleInput(evt.currentTarget);
+				const columnSelected = parseInt(evt.currentTarget.dataset.col);
+				this.handleInput(columnSelected);
 			})
 		})
 	},
@@ -168,24 +169,36 @@ const app = {
 		this.active = true;
 	},
 	// input handling: 
-	handleInput(spaceDiv){
+	handleInput(column){
+
+		// return false if input is invalid 
 
 		if (!this.active){
 			console.log("Game has ended. Start new game to keep playing!");
-			return;
+			return false;
 		}
 
-		const index = this.board.findIndex(space => space.id == spaceDiv.id);
+		const lowestOccupiedIndex = this.board.findIndex(space => space.col == column && space.owned > 0);
+		let index; 
 
-		if (this.board[index].owned === 0){
-			this.board[index].owned = this.currPlayer;
-			const color = this[`player` + this.currPlayer];
-			spaceDiv.style.background = color;
-			this.checkWin();
-			this.changeTurn();			
+		if(lowestOccupiedIndex < 0){
+			index = column + 34;
+		} else if (lowestOccupiedIndex < 6) {
+			console.log("Column completely occupied!");
+			return false;
 		} else {
-			console.log("THAT SPACE IS OCCUPIED")
+			index = lowestOccupiedIndex - 7;
 		}
+
+		console.log(index);
+
+		this.board[index].owned = this.currPlayer;
+		const color = this[`player` + this.currPlayer];
+		const targetSpaceDiv = document.getElementById(this.board[index].id);
+		targetSpaceDiv.style.background = color;
+
+		this.checkWin();
+		this.changeTurn(); 
 
 	},
 	changeTurn(){
