@@ -6,10 +6,12 @@ console.log("Connect 4")
 const app = {
 	turn: 1,
 	board: [],
+	unoccupied: "lightgray",
 	player1: "red",
 	player2: "yellow",
 	currPlayer: 1,
 	active: false,
+	animationOn: false,
 	palette: ["red", "orange", "yellow", "green", "blue", "purple", "black"],
 	colStarts: [],
 	rowStarts: [],
@@ -48,8 +50,7 @@ const app = {
 				this.handleInput(divClicked);
 			})
 		})
-	},
-	// board methods: 
+	}, 
 	resetBoard(){
 		this.board = [];
 
@@ -63,6 +64,10 @@ const app = {
 				})
 			}
 		}
+
+		this.board.forEach((space, i)=>{
+			space.index = i;
+		})
 	},
 	printBoard(){
 		for (let y = 1; y <= 6; y++){
@@ -84,7 +89,7 @@ const app = {
 	renderBoard(){
 		this.board.forEach(space => {
 		
-			let fillColor = "lightgray"; 
+			let fillColor = this.unoccupied; 
 
 			if (space.owned == 1) {
 				fillColor = this.player1;
@@ -98,7 +103,6 @@ const app = {
 			thisSpaceDiv.style.background = fillColor;
 		})
 	},
-	// win condition checking: 
 	checkWin(){
 		const colsWin = this.checkWinCondition(this.colStarts, 7);
 		const rowsWin = this.checkWinCondition(this.rowStarts, 1);
@@ -165,27 +169,28 @@ const app = {
 		this.currPlayer = 1;
 		this.active = true;
 	},
-	// input handling: 
 	handleInput(divSelected){
-
 		if (!this.active){
 			console.log("Game is over! Start a new game to continue playing...")
 			return false;
 		}
 
-		const column = parseInt(divSelected.dataset.col);
-		const isSelectionValid = this.insertSelection(column);
+		if (!this.animationOn){
+			const column = parseInt(divSelected.dataset.col);
+			const validSelection = this.insertSelection(column);
 
-		if (isSelectionValid){
-			this.renderBoard(); 
-			this.checkWin(); 
-			this.changeTurn(); 
-		} else {
-			console.log("Invalid Selection! Try again, Player" + this.currPlayer + ".");
-			return false;
+			if (validSelection){
+				this.animationOn = true; 
+				this.animation(validSelection.col - 1, validSelection.index);
+			} else {
+				console.log("Invalid Selection! Try again, Player" + this.currPlayer + ".");
+				return false;
+			}
 		}
 	},
 	insertSelection(column){
+		// note: return false to indicate invalid selection 
+
 		const lowestOccupiedIndex = this.board.findIndex(space => space.col == column && space.owned > 0);
 		let index; 
 
@@ -197,12 +202,37 @@ const app = {
 			index = lowestOccupiedIndex - 7;
 		}
 
-		this.board[index].owned = this.currPlayer;
-		return true;
+		const selection = this.board[index];
+		selection.owned = this.currPlayer;
+		return selection;
+	},
+	finishTurn(){
+		this.animationOn = false; 
+		this.renderBoard();
+		this.checkWin(); 
+		this.changeTurn();
 	},
 	changeTurn(){
 		this.turn++;
 		this.currPlayer = (this.turn % 2) || 2;
+	},
+	animation(currIndex, maxIndex){
+		if (currIndex >= maxIndex) {
+			this.finishTurn(); 
+			return true;
+		} else {
+			const color = this["player" + this.currPlayer];
+			const passingDiv = document.getElementById(this.board[currIndex].id);
+			console.log(passingDiv);
+			const unoccupiedColor = this.unoccupied; 
+
+			passingDiv.style.background = color;
+
+			setTimeout(()=>{
+				passingDiv.style.background = unoccupiedColor;
+				return this.animation(currIndex + 7, maxIndex);
+			}, 20)
+		}
 	}
 }
 
