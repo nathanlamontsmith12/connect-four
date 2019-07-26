@@ -9,6 +9,8 @@ const app = {
 	unoccupied: "lightgray",
 	player1: "red",
 	player2: "yellow",
+	player1L: "tomato",
+	player2L: "lightyellow",
 	currPlayer: 1,
 	active: false,
 	overlay: null,
@@ -112,8 +114,14 @@ const app = {
 		}
 	},
 	renderOverlay(){
-		console.log("renderOverlay fired!")
-		console.log(this.overlay)
+		const spacesToShade = this.board.filter(space => space.owned == 0 && space.col == this.overlay) 
+
+		spacesToShade.forEach(space => {
+			document.getElementById(space.id).style.background = this["player" + this.currPlayer + "L"];
+		})
+
+		// Style the last element in array a bit differently: 
+		document.getElementById(spacesToShade[spacesToShade.length - 1].id).style.background = "green";
 	},
 	renderBoard(){
 		this.board.forEach(space => {
