@@ -4,7 +4,7 @@
 }
 
 body {
-	background: slategray;
+	background: white;
 }
 
 #container {
@@ -33,12 +33,11 @@ body {
 .space {
 	width: 50px;
 	height: 50px;
-	border: 2px solid black;
+	border: 3px solid lightgray;
 	margin: 10px;
 }
 
 main {
 	height: 80vh;
 	width: 90%;
-	background: slategray;
 }

@@ -6,11 +6,12 @@ console.log("Connect 4")
 const app = {
 	turn: 0,
 	board: [],
-	unoccupied: "lightgray",
-	player1: "red",
-	player2: "yellow",
-	player1L: "tomato",
-	player2L: "lightyellow",
+	occupied: 0,
+	unoccupied: "white",
+	player1: "rgba(255, 0, 0, 1)",
+	player2: "rgba(255, 255, 0, 1)",
+	player1L: "rgba(255, 0, 0, 0.1)",
+	player2L: "rgba(255, 255, 0, 0.1)",
 	currPlayer: 1,
 	active: false,
 	overlay: null,
@@ -81,7 +82,7 @@ const app = {
 				this.board.push({
 					col: x,
 					row: y,
-					owned: 0,
+					owner: 0,
 					id: `s-${x}-${y}`,
 					index: index
 				});
@@ -114,30 +115,37 @@ const app = {
 		}
 	},
 	renderOverlay(){
-		const spacesToShade = this.board.filter(space => space.owned == 0 && space.col == this.overlay) 
+		const spacesToShade = this.board.filter(space => space.owner == 0 && space.col == this.overlay) 
 
 		spacesToShade.forEach(space => {
 			document.getElementById(space.id).style.background = this["player" + this.currPlayer + "L"];
 		})
 
-		// Style the last element in array a bit differently: 
-		document.getElementById(spacesToShade[spacesToShade.length - 1].id).style.background = "green";
+		// Highlight last space: 
+		const lastSpace = document.getElementById(spacesToShade[spacesToShade.length - 1].id)
+		lastSpace.style.border = "3px solid slategray";
 	},
 	renderBoard(){
 		this.board.forEach(space => {
 		
 			let fillColor = this.unoccupied; 
 
-			if (space.owned == 1) {
+			if (space.owner == 1) {
 				fillColor = this.player1;
 			} 
 
-			if (space.owned == 2) {
+			if (space.owner == 2) {
 				fillColor = this.player2;
 			} 
 
 			const thisSpaceDiv = document.querySelector(`#s-${space.col}-${space.row}`);
 			thisSpaceDiv.style.background = fillColor;
+
+			if (space.owner) {
+				thisSpaceDiv.style.border = "3px solid black";
+			} else {
+				thisSpaceDiv.style.border = "3px solid lightgray";
+			}
 		})
 	},
 	checkWin(){
@@ -146,27 +154,38 @@ const app = {
 		const diagsRightWin = this.checkWinCondition(this.diagRightStarts, 8);
 		const diagsLeftWin = this.checkWinCondition(this.diagLeftStarts, 6);
 
+		const winningPatterns = [];
 		if(colsWin){
-			this.gameOver(colsWin);
+			winningPatterns.push(colsWin); 
 		}
 
 		if(rowsWin){
-			this.gameOver(rowsWin);
+			winningPatterns.push(rowsWin); 
 		}
 
 		if(diagsRightWin){
-			this.gameOver(diagsRightWin);
+			winningPatterns.push(diagsRightWin); 
 		}
 
 		if(diagsLeftWin){
-			this.gameOver(diagsLeftWin);
+			winningPatterns.push(diagsLeftWin); 
 		}
+
+		if (winningPatterns.length > 0) {
+			this.gameOver(winningPatterns);
+		} else {
+			//check tie 
+			if(this.occupied >= 42){
+				this.gameOver();
+			}			
+		}
+
 	},
 	checkWinCondition(startsArr, skipNum){
 		for (let i = 0; i < startsArr.length; i++){
 
 			const index = startsArr[i];
-			const maybeWinner = this.board[index].owned;
+			const maybeWinner = this.board[index].owner;
 			const winningPattern = [];
 
 			if (!maybeWinner){
@@ -179,7 +198,7 @@ const app = {
 			let skip = skipNum;
 
 			for (let j = 1; j <= 3; j++){
-				if (this.board[index].owned === this.board[index + skip].owned){
+				if (this.board[index].owner === this.board[index + skip].owner){
 					winningPattern.push(index + skip);
 					count++;
 					skip += skipNum;
@@ -194,10 +213,14 @@ const app = {
 		return false;
 	},
 	gameOver(pattern){
-		this.active = false;
 		console.log("GAME OVER")
-		console.log("PLAYER " + this.currPlayer + " WINS!")
-		console.log(pattern);
+		this.active = false;
+		if (!pattern) {
+			console.log("THE GAME IS A TIE")
+		} else {
+			console.log("PLAYER " + this.currPlayer + " WINS!")
+			console.log(pattern);			
+		}
 	},
 	newGame(){
 		this.turn = 0; 
@@ -229,7 +252,7 @@ const app = {
 	insertSelection(column){
 		// note: return false to indicate invalid selection 
 
-		const lowestOccupiedIndex = this.board.findIndex(space => space.col == column && space.owned > 0);
+		const lowestOccupiedIndex = this.board.findIndex(space => space.col == column && space.owner > 0);
 		let index; 
 
 		if(lowestOccupiedIndex < 0){
@@ -241,7 +264,8 @@ const app = {
 		}
 
 		const selection = this.board[index];
-		selection.owned = this.currPlayer;
+		selection.owner = this.currPlayer;
+		this.occupied++;
 		return selection;
 	},
 	finishTurn(){
