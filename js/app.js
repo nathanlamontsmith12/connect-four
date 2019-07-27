@@ -368,9 +368,9 @@ const app = {
 	},
 	checkStartGame(){
 		if (this.player1 && this.player2 && this.player1 !== this.player2) {
-			start.disabled = false;
+			startBtn.disabled = false;
 		} else {
-			start.disabled = true;
+			startBtn.disabled = true;
 		}
 	},
 	startGame(){
@@ -410,6 +410,7 @@ const app = {
 const container = document.getElementById("container");
 const startScreen = document.getElementById("start-screen");
 const startBtn = document.getElementById("start");
+const quickStartBtn = document.getElementById("quick-start");
 const gameArea = document.getElementById("game-area");
 const messageDisplay = document.getElementById("message-display");
 const board = document.getElementById("game-board");
@@ -453,10 +454,13 @@ player2.addEventListener("change", (evt)=>{
 	app.handleColorSelectionPlayer2(evt);
 });
 
-start.addEventListener("click", ()=>{
+startBtn.addEventListener("click", ()=>{
 	app.startGame();
 });
 
+quickStartBtn.addEventListener("click", ()=> {
+	app.startGame();
+});
 
 // global functions ----- 
 

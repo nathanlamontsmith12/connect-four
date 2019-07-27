@@ -37,6 +37,13 @@ body {
 	height: 40px;
 }
 
+#quick-start {
+	margin-top: 40px;
+	align-self: center;
+	width: 60px;
+	height: 30px;
+}
+
 #game-area{
 	display: none;
 	flex-direction: column;
