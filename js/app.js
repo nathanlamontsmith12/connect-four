@@ -39,8 +39,8 @@ const app = {
 	board: [],
 	occupied: 0,
 	emptyColor: "white",
-	player1: null,
-	player2: null,
+	player1: "",
+	player2: "",
 	player1L: null,
 	player2L: null,
 	currPlayer: 1,
@@ -63,6 +63,7 @@ const app = {
 			this.printBoard();
 			this.activateBoard();
 			this.activateOverlayAnimation();
+			this.translateColorSelections();
 			this.firstGame = false;			
 		}
 
@@ -319,7 +320,7 @@ const app = {
 			passingDiv.style.background = color;
 
 			setTimeout(()=>{
-				passingDiv.style.background = emptyColor;
+				passingDiv.style.background = this.emptyColor;
 				return this.animation(currIndex + 7, maxIndex);
 			}, 20)
 		}
@@ -338,14 +339,68 @@ const app = {
 		window.cancelAnimationFrame(this.overlayAnimationId);
 	},
 	handleColorSelectionPlayer1(evt){
-		console.log("handleColorSelection Player 1 fired!");
-		console.log("Player 1 chose:")
-		console.log(evt.target.value);
+		this.player1 = evt.target.value;
+
+		const otherPlayerOpts = document.querySelectorAll("#player-two option");
+		otherPlayerOpts.forEach(opt => {
+			if (opt.value === evt.target.value) {
+				opt.disabled = true;
+			} else {
+				opt.disabled = false;
+			}
+		})
+
+		this.checkStartGame();
 	},
 	handleColorSelectionPlayer2(evt){
-		console.log("handleColorSelection Player 2 fired!");
-		console.log("Player 2 chose:")
-		console.log(evt.target.value);
+		this.player2 = evt.target.value; 
+
+		const otherPlayerOpts = document.querySelectorAll("#player-one option");
+		otherPlayerOpts.forEach(opt => {
+			if (opt.value === evt.target.value) {
+				opt.disabled = true;
+			} else {
+				opt.disabled = false;
+			}
+		})
+
+		this.checkStartGame();
+	},
+	checkStartGame(){
+		if (this.player1 && this.player2 && this.player1 !== this.player2) {
+			start.disabled = false;
+		} else {
+			start.disabled = true;
+		}
+	},
+	startGame(){
+
+		// set defaults if choice hasn't been made 
+		// or if user somehow got same colors for both fields via hack or mistake: 
+
+		if (!this.player1 || !this.player2 || this.player1 == this.player2) {
+			this.player1 = "red";
+			this.player2 = "yellow";
+		}
+
+		startScreen.style.display = "none";
+		gameArea.style.display = "flex";
+
+		this.init();
+	},
+	translateColorSelections(){
+		const p1F = paletteMap[this.player1].fill;
+		const p1L = paletteMap[this.player1].light;
+		this.player1 = p1F;
+		this.player1L = p1L;
+
+		const p2F = paletteMap[this.player2].fill;
+		const p2L = paletteMap[this.player2].light;
+		this.player2 = p2F;
+		this.player2L = p2L;
+	},
+	quit(){
+		location.reload();
 	}
 }
 

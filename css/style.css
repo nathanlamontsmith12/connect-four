@@ -33,10 +33,13 @@ body {
 #start {
 	margin-top: 40px;
 	align-self: center;
+	width: 100px;
+	height: 40px;
 }
 
 #game-area{
 	display: none;
+	flex-direction: column;
 }
 
 #board {
