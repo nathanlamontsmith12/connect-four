@@ -1,3 +1,5 @@
+/* GLOBAL */
+
 * {
 	margin: 0;
 	padding: 0;
@@ -7,12 +9,30 @@ body {
 	background: white;
 }
 
+main {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 80vh;
+	width: 90%;
+}
+
+button {
+	margin-top: 40px;
+	align-self: center;
+	width: 100px;
+	height: 40px;
+}
+
 #container {
 	height: 100vh;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
+
+
+/* START SCREEN */
 
 #start-screen {
 	display: flex;
@@ -30,13 +50,6 @@ body {
 	flex-direction: column;
 }
 
-button {
-	margin-top: 40px;
-	align-self: center;
-	width: 100px;
-	height: 40px;
-}
-
 .smallBtn {
 	margin-top: 20px;
 	margin-bottom: 20px;
@@ -45,15 +58,12 @@ button {
 	height: 30px;
 }
 
+
+/* GAME DISPLAY */
+
 #game-area{
 	display: none;
 	flex-direction: column;
-}
-
-#board {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
 }
 
 #message-display {
@@ -70,6 +80,12 @@ button {
 	width: 200px;
 }
 
+#board {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
 .row {
 	display: flex;
 	justify-content: space-around;
@@ -81,12 +97,4 @@ button {
 	height: 50px;
 	border: 3px solid lightgray;
 	margin: 8px;
-}
-
-main {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 80vh;
-	width: 90%;
 }

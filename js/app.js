@@ -4,80 +4,99 @@ console.log("Connect 4")
 // start object ----- 
 
 const start = {
-	colors: ["", "red", "orange", "yellow", "green", "blue", "purple"],
-	paletteMap: {
-		red: {
+	options: [
+		{
+			color: null, 
+			value: "",
+			text: "-- Please Select Color --",
+			fill: null,
+			light: null
+		},
+		{
+			color: "red",
+			value: "red",
+			text: "red",
 			fill: "rgba(255, 0, 0, 1)",
 			light: "rgba(255, 0, 0, 0.1)"
 		},
-		orange: {
+		{
+			color: "orange",
+			value: "orange",
+			text: "orange",
 			fill: "rgba(255, 165, 0, 1)",
-			light: "rgba(255, 165, 0, 0.1)"
+			light: "rgba(255, 165, 0, 0.1)"			
 		},
-		yellow: {
+		{
+			color: "yellow",
+			value: "yellow",
+			text: "yellow",
 			fill: "rgba(255, 255, 0, 1)",
 			light: "rgba(255, 255, 0, 0.1)"
 		},
-		green: {
+		{
+			color: "green",
+			value: "green",
+			text: "green",
 			fill: "rgba(0, 128, 0, 1)",
 			light: "rgba(0, 128, 0, 0.1)"
-		}, 
-		blue: {
+		},
+		{
+			color: "blue",
+			value: "blue",
+			text: "blue",
 			fill: "rgba(0, 0, 205, 1)",
 			light: "rgba(0, 0, 205, 0.1)"
 		},
-		purple: {
+		{
+			color: "purple",
+			value: "purple",
+			text: "purple",
 			fill: "rgba(128, 0, 128, 1)",
-			light: "rgba(128, 0, 128, 0.1)"
+			light: "rgba(128, 0, 128, 0.1)"			
 		}
-	},
-	p1Select: "",
-	p2Select: "",
+	],
+	p1Select: 0,
+	p2Select: 0,
 	handleColorSelection(selection, pNum){
 		this[`p${pNum}Select`] = selection;
 		let other = (pNum + 1) % 2 || 2; 
-
 		const otherPlayerOpts = document.querySelectorAll(`#player-${other} option`);
-
-		otherPlayerOpts.forEach(opt => {
-			if (opt.value == selection) {
+		otherPlayerOpts.forEach((opt) => {
+			if (opt.value == selection && selection != 0) {
 				opt.disabled = true;
 			} else {
 				opt.disabled = false;
 			}
 		})
 
-		this.checkStartGame();
-	},
-	translateColorSelections(){
-		app.player1 = {
-			fill: this.paletteMap[this.p1Select].fill,
-			light: this.paletteMap[this.p1Select].light
-		}
-
-		app.player2 = {
-			fill: this.paletteMap[this.p2Select].fill,
-			light: this.paletteMap[this.p2Select].light
-		}
-	},
-	checkStartGame(){
 		if (this.p1Select && this.p2Select && this.p1Select !== this.p2Select) {
 			startBtn.disabled = false;
 		} else {
 			startBtn.disabled = true;
 		}
 	},
-	startGame(){
+	translateColorSelections(){
+		app.player1 = {
+			fill: this.options[this.p1Select].fill,
+			light: this.options[this.p1Select].light
+		}
+
+		app.player2 = {
+			fill: this.options[this.p2Select].fill,
+			light: this.options[this.p2Select].light
+		}
+	},
+	game(){
 		if (!this.p1Select || !this.p2Select || this.p1Select == this.p2Select) {
-			this.p1Select = "red";
-			this.p2Select = "yellow";
+			this.p1Select = 1;
+			this.p2Select = 3;
 		}
 		document.getElementById("start-screen").style.display = "none";
 		document.getElementById("game-area").style.display = "flex";
 
-		// transfer color selections to app object: 
+		// transfer color selections to game object: 
 		this.translateColorSelections();
-		app.init();
+		app.init(); 
 	}
 }
 
@@ -456,43 +475,34 @@ function deactivateOverlayAnimation(){
 // add initial event listeners -----  
 
 playerOneDropdown.addEventListener("change", (evt)=>{
-	start.handleColorSelection(evt.target.value, 1);
+	start.handleColorSelection(parseInt(evt.target.value), 1);
 })
 
 playerTwoDropdown.addEventListener("change", (evt)=>{
-	start.handleColorSelection(evt.target.value, 2);
+	start.handleColorSelection(parseInt(evt.target.value), 2);
 })	
 
 startBtn.addEventListener("click", ()=>{
-	start.startGame();
+	start.game();
 })
 
 quickStartBtn.addEventListener("click", ()=> {
-	start.startGame();
+	start.game();
 })	
 
 
 // wind it up... and let it run: 
 
-start.colors.forEach(color => {
+start.options.forEach((opt, i) => {
 	const optionP1 = document.createElement("option");
 	const optionP2 = document.createElement("option");
 
-	if (!color) {
-		optionP1.textContent = "-- Please Select Color --";
-		optionP2.textContent = "-- Please Select Color --";
-
-	} else {
-		optionP1.textContent = color;
-		optionP2.textContent = color;		
-	}
-
-	optionP1.value = color;
-	optionP1.classList.add("colorChoice");
+	optionP1.value = i;
+	optionP1.textContent = opt.text;
 	optionP1.dataset.player = "one";
 
-	optionP2.value = color;
-	optionP2.classList.add("colorChoice");
+	optionP2.value = i;
+	optionP2.text = opt.text;
 	optionP2.dataset.player = "two";
 
 	playerOneDropdown.appendChild(optionP1);
