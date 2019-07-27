@@ -1,5 +1,6 @@
 console.log("Connect 4")
 
+
 // global vars ----- 
 
 const colors = ["", "red", "orange", "yellow", "green", "blue", "purple"]
@@ -58,18 +59,17 @@ const app = {
 		this.active = true;
 		this.resetBoard();
 
-		// only do ONCE: 
 		if (this.firstGame) {
 			this.initStarts();
 			this.printBoard();
 			this.activateBoard();
-			this.activateOverlayAnimation();
+			activateOverlayAnimation();
 			this.translateColorSelections();
 			this.firstGame = false;			
 		}
 
 		this.renderBoard();
-		this.changeTurn();
+		this.finishTurn();
 	},
 	initStarts(){
 		for (let i = 0; i < 42; i++){
@@ -94,23 +94,20 @@ const app = {
 			space.addEventListener("click", (evt)=>{
 				const divClicked = evt.target;
 				this.handleInput(divClicked);
-			});
+			})
 			space.addEventListener("mouseover", (evt)=>{
-				const divEntered = evt.target; 
-				this.setOverlay(divEntered);
-			});
+				const column = evt.target.dataset.col; 
+				this.overlay = column; 
+			})
 			space.addEventListener("mouseout", ()=>{
-				this.clearOverlay();
+				this.overlay = null;
 			})
 		})
 	}, 
 	resetBoard(){
-
 		this.board = [];
 		this.occupied = 0;
-
 		let index = 0; 
-
 		for (let y = 1; y <= 6; y++){
 			for (let x = 1; x <= 7; x++) {
 				this.board.push({
@@ -120,15 +117,14 @@ const app = {
 					id: `s-${x}-${y}`,
 					index: index
 				});
-
 				index++;
 			}
 		}
 	},
 	printBoard(){
-
 		let index = 0; 
-
+		const gameBoardDisplay = document.getElementById("game-board");
+		
 		for (let y = 1; y <= 6; y++){
 			const newRow = document.createElement("div");
 			newRow.classList.add("row");
@@ -145,7 +141,7 @@ const app = {
 				index++;
 			}
 
-			board.appendChild(newRow);
+			gameBoardDisplay.appendChild(newRow);
 		}
 	},
 	renderOverlay(){
@@ -155,8 +151,6 @@ const app = {
 			document.getElementById(space.id).style.background = this["player" + this.currPlayer + "L"];
 		})
 
-		// Highlight last space: 
-
 		const lastSpace = spacesToShade[spacesToShade.length - 1];
 
 		if (lastSpace) {
@@ -165,15 +159,12 @@ const app = {
 		}
 	},
 	renderBoard(){
-
 		this.board.forEach(space => {
-		
-			let fillColor = this.emptyColor; 
+			let fillColor = this.emptyColor;
 
 			if (space.owner == 1) {
 				fillColor = this.player1;
 			} 
-
 			if (space.owner == 2) {
 				fillColor = this.player2;
 			} 
@@ -197,6 +188,7 @@ const app = {
 			message.style.color = "black";
 		}
 	},
+	// Endgame condition checking 
 	checkWin(){
 		const colsWin = this.checkWinCondition(this.colStarts, 7);
 		const rowsWin = this.checkWinCondition(this.rowStarts, 1);
@@ -204,6 +196,7 @@ const app = {
 		const diagsLeftWin = this.checkWinCondition(this.diagLeftStarts, 6);
 
 		const winningPatterns = [];
+
 		if(colsWin){
 			winningPatterns.push(colsWin); 
 		}
@@ -258,7 +251,6 @@ const app = {
 				return winningPattern;
 			} 
 		}
-
 		return false;
 	},
 	gameOver(pattern){
@@ -305,7 +297,7 @@ const app = {
 		quitBtn.classList.add("smallBtn");
 		quitBtn.id = "quit";
 		quitBtn.addEventListener("click", ()=>{
-			this.quit();
+			location.reload();
 		})
 
 		const btnDiv = document.createElement("div");
@@ -333,7 +325,7 @@ const app = {
 
 			if (validSelection){
 				this.dropAnimationOn = true; 
-				this.animation(validSelection.col - 1, validSelection.index);
+				this.dropAnimation(validSelection.col - 1, validSelection.index);
 			} else {
 				return false;
 			}			
@@ -362,17 +354,10 @@ const app = {
 		this.dropAnimationOn = false; 
 		this.renderBoard();
 		this.checkWin(); 
-		this.changeTurn();
-	},
-	changeTurn(){
 		this.turn++;
 		this.currPlayer = (this.turn % 2) || 2;
-		// if (this.active) {
-		// 	this.message = `Player ${this.currPlayer}`;
-		// 	this.displayMessage();
-		// }
 	},
-	animation(currIndex, maxIndex){
+	dropAnimation(currIndex, maxIndex){
 		if (currIndex >= maxIndex) {
 			this.finishTurn(); 
 			return true;
@@ -384,22 +369,9 @@ const app = {
 
 			setTimeout(()=>{
 				passingDiv.style.background = this.emptyColor;
-				return this.animation(currIndex + 7, maxIndex);
+				return this.dropAnimation(currIndex + 7, maxIndex);
 			}, 20)
 		}
-	},
-	setOverlay(target){
-		const column = parseInt(target.dataset.col);
-		this.overlay = column;
-	},
-	clearOverlay(){
-		this.overlay = null;
-	},
-	activateOverlayAnimation(){
-		this.overlayAnimationId = window.requestAnimationFrame(renderOverlay);
-	},
-	deactivateOverlayAnimation(){
-		window.cancelAnimationFrame(this.overlayAnimationId);
 	},
 	handleColorSelectionPlayer1(evt){
 		this.player1 = evt.target.value;
@@ -437,18 +409,12 @@ const app = {
 		}
 	},
 	startGame(){
-
-		// set defaults if choice hasn't been made 
-		// or if user somehow got same colors for both fields via hack or mistake: 
-
 		if (!this.player1 || !this.player2 || this.player1 == this.player2) {
 			this.player1 = "red";
 			this.player2 = "yellow";
 		}
-
-		startScreen.style.display = "none";
-		gameArea.style.display = "flex";
-
+		document.getElementById("start-screen").style.display = "none";
+		document.getElementById("game-area").style.display = "flex";
 		this.init();
 	},
 	translateColorSelections(){
@@ -461,23 +427,16 @@ const app = {
 		const p2L = paletteMap[this.player2].light;
 		this.player2 = p2F;
 		this.player2L = p2L;
-	},
-	quit(){
-		location.reload();
 	}
 }
 
 
 // cached elements ----- 
 
-const container = document.getElementById("container");
-const startScreen = document.getElementById("start-screen");
 const startBtn = document.getElementById("start");
 const quickStartBtn = document.getElementById("quick-start");
-const gameArea = document.getElementById("game-area");
-const board = document.getElementById("game-board");
-const player1 = document.getElementById("player-one");
-const player2 = document.getElementById("player-two");
+const playerOneDropdown = document.getElementById("player-one");
+const playerTwoDropdown = document.getElementById("player-two");
 
 
 // start screen init ----- 
@@ -503,41 +462,45 @@ colors.forEach(color => {
 	optionP2.classList.add("colorChoice");
 	optionP2.dataset.player = "two";
 
-	// append: 
-	player1.appendChild(optionP1);
-	player2.appendChild(optionP2);
+	playerOneDropdown.appendChild(optionP1);
+	playerTwoDropdown.appendChild(optionP2);
 })
 
-player1.addEventListener("change", (evt)=>{
+playerOneDropdown.addEventListener("change", (evt)=>{
 	app.handleColorSelectionPlayer1(evt);
-});
+})
 
-player2.addEventListener("change", (evt)=>{
+playerTwoDropdown.addEventListener("change", (evt)=>{
 	app.handleColorSelectionPlayer2(evt);
-});
+})
 
 startBtn.addEventListener("click", ()=>{
 	app.startGame();
-});
+})
 
 quickStartBtn.addEventListener("click", ()=> {
 	app.startGame();
-});
+})
+
 
 // global functions ----- 
 
 function renderOverlay(){
-
 	if(app.active && !app.dropAnimationOn) {
-
 		if(app.overlay) {
 			app.renderOverlay();
 		} else {
 			app.renderBoard();
 		}
-
 	}
 
 	window.requestAnimationFrame(renderOverlay)
 }
 
+function activateOverlayAnimation(){
+	app.overlayAnimationId = window.requestAnimationFrame(renderOverlay);
+}
+
+function deactivateOverlayAnimation(){
+	window.cancelAnimationFrame(this.overlayAnimationId);
+}
