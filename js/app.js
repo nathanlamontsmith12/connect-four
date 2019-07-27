@@ -1,34 +1,83 @@
 console.log("Connect 4")
 
 
-// global vars ----- 
+// start object ----- 
 
-const colors = ["", "red", "orange", "yellow", "green", "blue", "purple"]
+const start = {
+	colors: ["", "red", "orange", "yellow", "green", "blue", "purple"],
+	paletteMap: {
+		red: {
+			fill: "rgba(255, 0, 0, 1)",
+			light: "rgba(255, 0, 0, 0.1)"
+		},
+		orange: {
+			fill: "rgba(255, 165, 0, 1)",
+			light: "rgba(255, 165, 0, 0.1)"
+		},
+		yellow: {
+			fill: "rgba(255, 255, 0, 1)",
+			light: "rgba(255, 255, 0, 0.1)"
+		},
+		green: {
+			fill: "rgba(0, 128, 0, 1)",
+			light: "rgba(0, 128, 0, 0.1)"
+		}, 
+		blue: {
+			fill: "rgba(0, 0, 205, 1)",
+			light: "rgba(0, 0, 205, 0.1)"
+		},
+		purple: {
+			fill: "rgba(128, 0, 128, 1)",
+			light: "rgba(128, 0, 128, 0.1)"
+		}
+	},
+	p1Select: "",
+	p2Select: "",
+	handleColorSelection(selection, pNum){
+		this[`p${pNum}Select`] = selection;
+		let other = (pNum + 1) % 2 || 2; 
 
-const paletteMap = {
-	red: {
-		fill: "rgba(255, 0, 0, 1)",
-		light: "rgba(255, 0, 0, 0.1)"
+		const otherPlayerOpts = document.querySelectorAll(`#player-${other} option`);
+
+		otherPlayerOpts.forEach(opt => {
+			if (opt.value == selection) {
+				opt.disabled = true;
+			} else {
+				opt.disabled = false;
+			}
+		})
+
+		this.checkStartGame();
 	},
-	orange: {
-		fill: "rgba(255, 165, 0, 1)",
-		light: "rgba(255, 165, 0, 0.1)"
+	translateColorSelections(){
+		app.player1 = {
+			fill: this.paletteMap[this.p1Select].fill,
+			light: this.paletteMap[this.p1Select].light
+		}
+
+		app.player2 = {
+			fill: this.paletteMap[this.p2Select].fill,
+			light: this.paletteMap[this.p2Select].light
+		}
 	},
-	yellow: {
-		fill: "rgba(255, 255, 0, 1)",
-		light: "rgba(255, 255, 0, 0.1)"
+	checkStartGame(){
+		if (this.p1Select && this.p2Select && this.p1Select !== this.p2Select) {
+			startBtn.disabled = false;
+		} else {
+			startBtn.disabled = true;
+		}
 	},
-	green: {
-		fill: "rgba(0, 128, 0, 1)",
-		light: "rgba(0, 128, 0, 0.1)"
-	}, 
-	blue: {
-		fill: "rgba(0, 0, 205, 1)",
-		light: "rgba(0, 0, 205, 0.1)"
-	},
-	purple: {
-		fill: "rgba(128, 0, 128, 1)",
-		light: "rgba(128, 0, 128, 0.1)"
+	startGame(){
+		if (!this.p1Select || !this.p2Select || this.p1Select == this.p2Select) {
+			this.p1Select = "red";
+			this.p2Select = "yellow";
+		}
+		document.getElementById("start-screen").style.display = "none";
+		document.getElementById("game-area").style.display = "flex";
+
+		// transfer color selections to app object: 
+		this.translateColorSelections();
+		app.init();
 	}
 }
 
@@ -39,11 +88,9 @@ const app = {
 	turn: 0,
 	board: [],
 	occupied: 0,
-	emptyColor: "white",
-	player1: "",
-	player2: "",
-	player1L: null,
-	player2L: null,
+	emptyFill: "white",
+	player1: null,
+	player2: null,
 	message: "",
 	currPlayer: 1,
 	active: false,
@@ -64,7 +111,6 @@ const app = {
 			this.printBoard();
 			this.activateBoard();
 			activateOverlayAnimation();
-			this.translateColorSelections();
 			this.firstGame = false;			
 		}
 
@@ -148,7 +194,7 @@ const app = {
 		const spacesToShade = this.board.filter(space => space.owner == 0 && space.col == this.overlay) 
 
 		spacesToShade.forEach(space => {
-			document.getElementById(space.id).style.background = this["player" + this.currPlayer + "L"];
+			document.getElementById(space.id).style.background = this["player" + this.currPlayer].light;
 		})
 
 		const lastSpace = spacesToShade[spacesToShade.length - 1];
@@ -160,13 +206,13 @@ const app = {
 	},
 	renderBoard(){
 		this.board.forEach(space => {
-			let fillColor = this.emptyColor;
+			let fillColor = this.emptyFill;
 
 			if (space.owner == 1) {
-				fillColor = this.player1;
+				fillColor = this.player1.fill;
 			} 
 			if (space.owner == 2) {
-				fillColor = this.player2;
+				fillColor = this.player2.fill;
 			} 
 
 			const thisSpaceDiv = document.querySelector(`#s-${space.col}-${space.row}`);
@@ -183,7 +229,7 @@ const app = {
 		const message = document.getElementById("message") 
 		message.textContent = this.message;
 		if (this.active) {
-			message.style.color = this["player" + this.currPlayer]; 
+			message.style.color = this["player" + this.currPlayer].fill; 
 		} else {
 			message.style.color = "black";
 		}
@@ -281,7 +327,7 @@ const app = {
 
 		this.board.forEach(space => {
 			if (space.owner != 0 && !winningSpaces.includes(space.index)){
-				document.getElementById(space.id).style.background = this[`player${space.owner}L`];
+				document.getElementById(space.id).style.background = this[`player${space.owner}`].light;
 			}
 		})
 
@@ -362,71 +408,16 @@ const app = {
 			this.finishTurn(); 
 			return true;
 		} else {
-			const color = this["player" + this.currPlayer];
+			const color = this["player" + this.currPlayer].fill;
 			const passingDiv = document.getElementById(this.board[currIndex].id);
 
 			passingDiv.style.background = color;
 
 			setTimeout(()=>{
-				passingDiv.style.background = this.emptyColor;
+				passingDiv.style.background = this.emptyFill;
 				return this.dropAnimation(currIndex + 7, maxIndex);
 			}, 20)
 		}
-	},
-	handleColorSelectionPlayer1(evt){
-		this.player1 = evt.target.value;
-
-		const otherPlayerOpts = document.querySelectorAll("#player-two option");
-		otherPlayerOpts.forEach(opt => {
-			if (opt.value === evt.target.value) {
-				opt.disabled = true;
-			} else {
-				opt.disabled = false;
-			}
-		})
-
-		this.checkStartGame();
-	},
-	handleColorSelectionPlayer2(evt){
-		this.player2 = evt.target.value; 
-
-		const otherPlayerOpts = document.querySelectorAll("#player-one option");
-		otherPlayerOpts.forEach(opt => {
-			if (opt.value === evt.target.value) {
-				opt.disabled = true;
-			} else {
-				opt.disabled = false;
-			}
-		})
-
-		this.checkStartGame();
-	},
-	checkStartGame(){
-		if (this.player1 && this.player2 && this.player1 !== this.player2) {
-			startBtn.disabled = false;
-		} else {
-			startBtn.disabled = true;
-		}
-	},
-	startGame(){
-		if (!this.player1 || !this.player2 || this.player1 == this.player2) {
-			this.player1 = "red";
-			this.player2 = "yellow";
-		}
-		document.getElementById("start-screen").style.display = "none";
-		document.getElementById("game-area").style.display = "flex";
-		this.init();
-	},
-	translateColorSelections(){
-		const p1F = paletteMap[this.player1].fill;
-		const p1L = paletteMap[this.player1].light;
-		this.player1 = p1F;
-		this.player1L = p1L;
-
-		const p2F = paletteMap[this.player2].fill;
-		const p2L = paletteMap[this.player2].light;
-		this.player2 = p2F;
-		this.player2L = p2L;
 	}
 }
 
@@ -435,52 +426,8 @@ const app = {
 
 const startBtn = document.getElementById("start");
 const quickStartBtn = document.getElementById("quick-start");
-const playerOneDropdown = document.getElementById("player-one");
-const playerTwoDropdown = document.getElementById("player-two");
-
-
-// start screen init ----- 
-
-colors.forEach(color => {
-	const optionP1 = document.createElement("option");
-	const optionP2 = document.createElement("option");
-
-	if (!color) {
-		optionP1.textContent = "-- Please Select Color --";
-		optionP2.textContent = "-- Please Select Color --";
-
-	} else {
-		optionP1.textContent = color;
-		optionP2.textContent = color;		
-	}
-
-	optionP1.value = color;
-	optionP1.classList.add("colorChoice");
-	optionP1.dataset.player = "one";
-
-	optionP2.value = color;
-	optionP2.classList.add("colorChoice");
-	optionP2.dataset.player = "two";
-
-	playerOneDropdown.appendChild(optionP1);
-	playerTwoDropdown.appendChild(optionP2);
-})
-
-playerOneDropdown.addEventListener("change", (evt)=>{
-	app.handleColorSelectionPlayer1(evt);
-})
-
-playerTwoDropdown.addEventListener("change", (evt)=>{
-	app.handleColorSelectionPlayer2(evt);
-})
-
-startBtn.addEventListener("click", ()=>{
-	app.startGame();
-})
-
-quickStartBtn.addEventListener("click", ()=> {
-	app.startGame();
-})
+const playerOneDropdown = document.getElementById("player-1");
+const playerTwoDropdown = document.getElementById("player-2");
 
 
 // global functions ----- 
@@ -504,3 +451,50 @@ function activateOverlayAnimation(){
 function deactivateOverlayAnimation(){
 	window.cancelAnimationFrame(this.overlayAnimationId);
 }
+
+
+// add initial event listeners -----  
+
+playerOneDropdown.addEventListener("change", (evt)=>{
+	start.handleColorSelection(evt.target.value, 1);
+})
+
+playerTwoDropdown.addEventListener("change", (evt)=>{
+	start.handleColorSelection(evt.target.value, 2);
+})	
+
+startBtn.addEventListener("click", ()=>{
+	start.startGame();
+})
+
+quickStartBtn.addEventListener("click", ()=> {
+	start.startGame();
+})	
+
+
+// wind it up... and let it run: 
+
+start.colors.forEach(color => {
+	const optionP1 = document.createElement("option");
+	const optionP2 = document.createElement("option");
+
+	if (!color) {
+		optionP1.textContent = "-- Please Select Color --";
+		optionP2.textContent = "-- Please Select Color --";
+
+	} else {
+		optionP1.textContent = color;
+		optionP2.textContent = color;		
+	}
+
+	optionP1.value = color;
+	optionP1.classList.add("colorChoice");
+	optionP1.dataset.player = "one";
+
+	optionP2.value = color;
+	optionP2.classList.add("colorChoice");
+	optionP2.dataset.player = "two";
+
+	playerOneDropdown.appendChild(optionP1);
+	playerTwoDropdown.appendChild(optionP2);
+})
