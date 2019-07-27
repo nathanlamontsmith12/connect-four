@@ -1,6 +1,121 @@
 console.log("Connect 4")
 
 
+// classes ----- 
+
+class Board {
+	constructor(){
+		this.spaces = [];
+		this.occupied = 0; 
+		this.colStarts = [];
+		this.rowStarts = [];
+		this.diagRightStarts = [];
+		this.diagLeftStarts = [];
+	}
+	init(){
+		this.reset();
+		this.makeStarts();
+	}
+	reset(){
+		this.spaces = [];
+		this.occupied = 0;
+		let index = 0; 
+		for (let y = 1; y <= 6; y++){
+			for (let x = 1; x <= 7; x++) {
+				this.spaces.push({
+					col: x,
+					row: y,
+					owner: 0,
+					id: `s-${x}-${y}`,
+					index: index
+				});
+				index++;
+			}
+		}
+	}
+	makeStarts(){
+		for (let i = 0; i < 42; i++){
+			if (i <= 20) {
+				this.colStarts.push(i);
+			}
+
+			if (i % 7 === 0) {
+				for (let j = i; j <= i + 3; j++) {
+					this.rowStarts.push(j);
+					if(i <= 14){
+						this.diagRightStarts.push(j);
+						this.diagLeftStarts.push(j + 3);
+					}
+				}
+			}
+		}
+	}
+	isFull(){
+		return this.occupied >= this.spaces.length; 
+	}
+	checkWin(){
+		const colsWin = this.checkWinCondition(this.colStarts, 7);
+		const rowsWin = this.checkWinCondition(this.rowStarts, 1);
+		const diagsRightWin = this.checkWinCondition(this.diagRightStarts, 8);
+		const diagsLeftWin = this.checkWinCondition(this.diagLeftStarts, 6);
+
+		const winningPatterns = [];
+
+		if(colsWin){
+			winningPatterns.push(colsWin); 
+		}
+
+		if(rowsWin){
+			winningPatterns.push(rowsWin); 
+		}
+
+		if(diagsRightWin){
+			winningPatterns.push(diagsRightWin); 
+		}
+
+		if(diagsLeftWin){
+			winningPatterns.push(diagsLeftWin); 
+		}
+
+		if (winningPatterns.length > 0) {
+			return winningPatterns;
+		} else {
+			return false;
+		}
+	}
+	checkWinCondition(startsArr, skipNum){
+		for (let i = 0; i < startsArr.length; i++){
+
+			const index = startsArr[i];
+			const maybeWinner = this.spaces[index].owner;
+			const winningPattern = [];
+
+			if (!maybeWinner){
+				continue;
+			}
+
+			winningPattern.push(index);
+
+			let count = 1;
+			let skip = skipNum;
+
+			for (let j = 1; j <= 3; j++){
+				if (this.spaces[index].owner === this.spaces[index + skip].owner){
+					winningPattern.push(index + skip);
+					count++;
+					skip += skipNum;
+				}
+			}
+
+			if (count >= 4) {
+				return winningPattern;
+			} 
+		}
+		return false;
+	}
+}
+
+
 // start object ----- 
 
 const start = {
@@ -17,42 +132,42 @@ const start = {
 			value: "red",
 			text: "red",
 			fill: "rgba(255, 0, 0, 1)",
-			light: "rgba(255, 0, 0, 0.1)"
+			light: "rgba(255, 0, 0, 0.2)"
 		},
 		{
 			color: "orange",
 			value: "orange",
 			text: "orange",
 			fill: "rgba(255, 165, 0, 1)",
-			light: "rgba(255, 165, 0, 0.1)"			
+			light: "rgba(255, 165, 0, 0.2)"			
 		},
 		{
 			color: "yellow",
 			value: "yellow",
 			text: "yellow",
 			fill: "rgba(255, 255, 0, 1)",
-			light: "rgba(255, 255, 0, 0.1)"
+			light: "rgba(255, 255, 0, 0.2)"
 		},
 		{
 			color: "green",
 			value: "green",
 			text: "green",
 			fill: "rgba(0, 128, 0, 1)",
-			light: "rgba(0, 128, 0, 0.1)"
+			light: "rgba(0, 128, 0, 0.2)"
 		},
 		{
 			color: "blue",
 			value: "blue",
 			text: "blue",
 			fill: "rgba(0, 0, 205, 1)",
-			light: "rgba(0, 0, 205, 0.1)"
+			light: "rgba(0, 0, 205, 0.2)"
 		},
 		{
 			color: "purple",
 			value: "purple",
 			text: "purple",
 			fill: "rgba(128, 0, 128, 1)",
-			light: "rgba(128, 0, 128, 0.1)"			
+			light: "rgba(128, 0, 128, 0.2)"			
 		}
 	],
 	p1Select: 0,
@@ -109,23 +224,19 @@ const app = {
 	player1: null,
 	player2: null,
 	turn: 0,
-	board: [],
+	board: null,
 	occupied: 0,
 	currPlayer: null,
 	active: false,
 	firstGame: true,
-	colStarts: [],
-	rowStarts: [],
-	diagRightStarts: [],
-	diagLeftStarts: [],
 	init(){
 		this.active = true;
-		this.resetBoard();
+		this.board = new Board();
+		this.board.init();
 
 		if (this.firstGame) {
-			this.initStarts();
 			display.printBoard();
-			this.activateBoard();
+			this.activateUI();
 			activateOverlayAnimation();
 			this.firstGame = false;	
 		}
@@ -133,41 +244,7 @@ const app = {
 		display.renderBoard();
 		this.finishTurn();
 	},
-	resetBoard(){
-		this.board = [];
-		this.occupied = 0;
-		let index = 0; 
-		for (let y = 1; y <= 6; y++){
-			for (let x = 1; x <= 7; x++) {
-				this.board.push({
-					col: x,
-					row: y,
-					owner: 0,
-					id: `s-${x}-${y}`,
-					index: index
-				});
-				index++;
-			}
-		}
-	},
-	initStarts(){
-		for (let i = 0; i < 42; i++){
-			if (i <= 20) {
-				this.colStarts.push(i);
-			}
-
-			if (i % 7 === 0) {
-				for (let j = i; j <= i + 3; j++) {
-					this.rowStarts.push(j);
-					if(i <= 14){
-						this.diagRightStarts.push(j);
-						this.diagLeftStarts.push(j + 3);
-					}
-				}
-			}
-		}
-	},
-	activateBoard(){
+	activateUI(){
 		const allSpaces = document.querySelectorAll(".space");
 		allSpaces.forEach(space => {
 			space.addEventListener("click", (evt)=>{
@@ -204,7 +281,7 @@ const app = {
 	insertSelection(column){
 		// note: return false to indicate invalid selection 
 
-		const lowestOccupiedIndex = this.board.findIndex(space => space.col == column && space.owner > 0);
+		const lowestOccupiedIndex = this.board.spaces.findIndex(space => space.col == column && space.owner != 0);
 		let index; 
 
 		if(lowestOccupiedIndex < 0){
@@ -215,7 +292,7 @@ const app = {
 			index = lowestOccupiedIndex - 7;
 		}
 
-		const selection = this.board[index];
+		const selection = this.board.spaces[index];
 		selection.owner = this.currPlayer.num;
 		this.occupied++;
 		return selection;
@@ -223,73 +300,22 @@ const app = {
 	finishTurn(){
 		display.dropAnimationOn = false; 
 		display.renderBoard();
-		this.checkWin(); 
+
+		// check win / tie: 
+		const winningPatterns = this.board.checkWin(); 
+		if (winningPatterns) {
+			this.gameOver(winningPatterns);
+			return;
+		}
+
+		if (this.board.isFull()){
+			this.gameOver(null);
+			return;
+		}
+
 		this.turn++;
 		const playerNumber = (this.turn % 2) || 2;
 		this.currPlayer = this[`player${playerNumber}`];
-	},
-	checkWin(){
-		const colsWin = this.checkWinCondition(this.colStarts, 7);
-		const rowsWin = this.checkWinCondition(this.rowStarts, 1);
-		const diagsRightWin = this.checkWinCondition(this.diagRightStarts, 8);
-		const diagsLeftWin = this.checkWinCondition(this.diagLeftStarts, 6);
-
-		const winningPatterns = [];
-
-		if(colsWin){
-			winningPatterns.push(colsWin); 
-		}
-
-		if(rowsWin){
-			winningPatterns.push(rowsWin); 
-		}
-
-		if(diagsRightWin){
-			winningPatterns.push(diagsRightWin); 
-		}
-
-		if(diagsLeftWin){
-			winningPatterns.push(diagsLeftWin); 
-		}
-
-		if (winningPatterns.length > 0) {
-			this.gameOver(winningPatterns);
-		} else {
-			//check tie 
-			if(this.occupied >= 42){
-				this.gameOver();
-			}			
-		}
-	},
-	checkWinCondition(startsArr, skipNum){
-		for (let i = 0; i < startsArr.length; i++){
-
-			const index = startsArr[i];
-			const maybeWinner = this.board[index].owner;
-			const winningPattern = [];
-
-			if (!maybeWinner){
-				continue;
-			}
-
-			winningPattern.push(index);
-
-			let count = 1;
-			let skip = skipNum;
-
-			for (let j = 1; j <= 3; j++){
-				if (this.board[index].owner === this.board[index + skip].owner){
-					winningPattern.push(index + skip);
-					count++;
-					skip += skipNum;
-				}
-			}
-
-			if (count >= 4) {
-				return winningPattern;
-			} 
-		}
-		return false;
 	},
 	gameOver(pattern){
 		this.active = false;
@@ -357,7 +383,7 @@ const display = {
 		}
 	},
 	renderBoard(){
-		app.board.forEach(space => {
+		app.board.spaces.forEach(space => {
 			let fillColor = this.emptyFill;
 
 			if (space.owner == 1) {
@@ -378,7 +404,7 @@ const display = {
 		})
 	},
 	renderOverlay(){
-		const spacesToShade = app.board.filter(space => space.owner == 0 && space.col == this.overlay) 
+		const spacesToShade = app.board.spaces.filter(space => space.owner == 0 && space.col == this.overlay) 
 
 		spacesToShade.forEach(space => {
 			document.getElementById(space.id).style.background = app.currPlayer.light;
@@ -389,6 +415,22 @@ const display = {
 		if (lastSpace) {
 			const lastSpaceDiv = document.getElementById(spacesToShade[spacesToShade.length - 1].id);
 			lastSpaceDiv.style.border = "3px solid slategray";
+		}
+	},
+	dropAnimation(currIndex, maxIndex){
+		if (currIndex >= maxIndex) {
+			app.finishTurn(); 
+			return true;
+		} else {
+			const color = app.currPlayer.fill;
+			const passingDiv = document.getElementById(app.board.spaces[currIndex].id);
+
+			passingDiv.style.background = color;
+
+			setTimeout(()=>{
+				passingDiv.style.background = this.emptyFill;
+				return this.dropAnimation(currIndex + 7, maxIndex);
+			}, 20)
 		}
 	},
 	printMessage(){
@@ -402,7 +444,7 @@ const display = {
 	},
 	endGamePattern(winningSpaces){
 
-		app.board.forEach(space => {
+		app.board.spaces.forEach(space => {
 			if (space.owner != 0 && !winningSpaces.includes(space.index)){
 				document.getElementById(space.id).style.background = app[`player${space.owner}`].light;
 			}
@@ -427,22 +469,6 @@ const display = {
 		btnDiv.appendChild(newGameBtn);
 		btnDiv.appendChild(quitBtn);
 		document.getElementById("message-display").appendChild(btnDiv);
-	},
-	dropAnimation(currIndex, maxIndex){
-		if (currIndex >= maxIndex) {
-			app.finishTurn(); 
-			return true;
-		} else {
-			const color = app.currPlayer.fill;
-			const passingDiv = document.getElementById(app.board[currIndex].id);
-
-			passingDiv.style.background = color;
-
-			setTimeout(()=>{
-				passingDiv.style.background = this.emptyFill;
-				return this.dropAnimation(currIndex + 7, maxIndex);
-			}, 20)
-		}
 	}
 }
 
