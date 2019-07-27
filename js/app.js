@@ -5,8 +5,7 @@ console.log("Connect 4")
 
 class Board {
 	constructor(){
-		this.spaces = [];
-		this.occupied = 0; 
+		this.spaces = []; 
 		this.colStarts = [];
 		this.rowStarts = [];
 		this.diagRightStarts = [];
@@ -18,7 +17,6 @@ class Board {
 	}
 	reset(){
 		this.spaces = [];
-		this.occupied = 0;
 		let index = 0; 
 		for (let y = 1; y <= 6; y++){
 			for (let x = 1; x <= 7; x++) {
@@ -51,7 +49,7 @@ class Board {
 		}
 	}
 	isFull(){
-		return this.occupied >= this.spaces.length; 
+		return this.spaces.every(space => space.owner != 0); 
 	}
 	checkWin(){
 		const colsWin = this.checkWinCondition(this.colStarts, 7);
@@ -225,7 +223,6 @@ const app = {
 	player2: null,
 	turn: 0,
 	board: null,
-	occupied: 0,
 	currPlayer: null,
 	active: false,
 	firstGame: true,
@@ -294,7 +291,6 @@ const app = {
 
 		const selection = this.board.spaces[index];
 		selection.owner = this.currPlayer.num;
-		this.occupied++;
 		return selection;
 	},
 	finishTurn(){
