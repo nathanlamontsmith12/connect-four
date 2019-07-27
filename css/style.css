@@ -30,15 +30,16 @@ body {
 	flex-direction: column;
 }
 
-#start {
+button {
 	margin-top: 40px;
 	align-self: center;
 	width: 100px;
 	height: 40px;
 }
 
-#quick-start {
-	margin-top: 40px;
+.smallBtn {
+	margin-top: 20px;
+	margin-bottom: 20px;
 	align-self: center;
 	width: 60px;
 	height: 30px;
@@ -56,9 +57,17 @@ body {
 }
 
 #message-display {
-	display: none;
+	display: flex;
+	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+}
+
+#message-display div {
+	display: flex;
+	align-items: center;
+	justify-content: space-around;
+	width: 200px;
 }
 
 .row {
@@ -71,7 +80,7 @@ body {
 	width: 50px;
 	height: 50px;
 	border: 3px solid lightgray;
-	margin: 10px;
+	margin: 8px;
 }
 
 main {

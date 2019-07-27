@@ -43,6 +43,7 @@ const app = {
 	player2: "",
 	player1L: null,
 	player2L: null,
+	message: "",
 	currPlayer: 1,
 	active: false,
 	overlay: null,
@@ -104,7 +105,9 @@ const app = {
 		})
 	}, 
 	resetBoard(){
+
 		this.board = [];
+		this.occupied = 0;
 
 		let index = 0; 
 
@@ -153,10 +156,16 @@ const app = {
 		})
 
 		// Highlight last space: 
-		const lastSpace = document.getElementById(spacesToShade[spacesToShade.length - 1].id)
-		lastSpace.style.border = "3px solid slategray";
+
+		const lastSpace = spacesToShade[spacesToShade.length - 1];
+
+		if (lastSpace) {
+			const lastSpaceDiv = document.getElementById(spacesToShade[spacesToShade.length - 1].id);
+			lastSpaceDiv.style.border = "3px solid slategray";
+		}
 	},
 	renderBoard(){
+
 		this.board.forEach(space => {
 		
 			let fillColor = this.emptyColor; 
@@ -178,6 +187,15 @@ const app = {
 				thisSpaceDiv.style.border = "3px solid lightgray";
 			}
 		})
+	},
+	displayMessage(){
+		const message = document.getElementById("message") 
+		message.textContent = this.message;
+		if (this.active) {
+			message.style.color = this["player" + this.currPlayer]; 
+		} else {
+			message.style.color = "black";
+		}
 	},
 	checkWin(){
 		const colsWin = this.checkWinCondition(this.colStarts, 7);
@@ -244,24 +262,68 @@ const app = {
 		return false;
 	},
 	gameOver(pattern){
-		console.log("GAME OVER")
 		this.active = false;
+		let newMsg = "Game Over!"
 		if (!pattern) {
-			console.log("THE GAME IS A TIE")
+			newMsg = newMsg + " " + "The Game is a Tie!";
 		} else {
-			console.log("PLAYER " + this.currPlayer + " WINS!")
-			console.log(pattern);			
+			newMsg = newMsg + " " + "Player " + this.currPlayer + " Wins!";			
 		}
+
+		this.message = newMsg;
+		this.displayMessage();
+
+		const winningSpaces = [];
+
+		if (pattern) {
+			pattern.forEach(subarr => {
+				for (let j = 0; j < subarr.length; j++) {
+					winningSpaces.push(subarr[j]);
+				}
+			});
+		}
+
+		this.displayEndGame(winningSpaces);
+	},
+	displayEndGame(winningSpaces){
+
+		this.board.forEach(space => {
+			if (space.owner != 0 && !winningSpaces.includes(space.index)){
+				document.getElementById(space.id).style.background = this[`player${space.owner}L`];
+			}
+		})
+
+		const newGameBtn = document.createElement("button");
+		newGameBtn.textContent = "Play Again";
+		newGameBtn.classList.add("smallBtn");
+		newGameBtn.addEventListener("click", ()=>{
+			this.newGame()
+		})
+
+		const quitBtn = document.createElement("button");
+		quitBtn.textContent = "Quit";
+		quitBtn.classList.add("smallBtn");
+		quitBtn.id = "quit";
+		quitBtn.addEventListener("click", ()=>{
+			this.quit();
+		})
+
+		const btnDiv = document.createElement("div");
+		btnDiv.appendChild(newGameBtn);
+		btnDiv.appendChild(quitBtn);
+		document.getElementById("message-display").appendChild(btnDiv);
 	},
 	newGame(){
+		document.querySelector("#message-display div").remove();
 		this.turn = 0; 
 		this.currPlayer = 1;
 		this.active = true;
+		this.message = "";
+		this.displayMessage();
 		this.init();
 	},
 	handleInput(divSelected){
 		if (!this.active){
-			console.log("Game is over! Start a new game to continue playing...")
 			return false;
 		}
 
@@ -273,12 +335,9 @@ const app = {
 				this.dropAnimationOn = true; 
 				this.animation(validSelection.col - 1, validSelection.index);
 			} else {
-				console.log("Invalid Selection! Try again, Player" + this.currPlayer + ".");
 				return false;
 			}			
-		} else {
-			console.log("animation blocked")
-		}
+		} 
 	},
 	insertSelection(column){
 		// note: return false to indicate invalid selection 
@@ -308,6 +367,10 @@ const app = {
 	changeTurn(){
 		this.turn++;
 		this.currPlayer = (this.turn % 2) || 2;
+		// if (this.active) {
+		// 	this.message = `Player ${this.currPlayer}`;
+		// 	this.displayMessage();
+		// }
 	},
 	animation(currIndex, maxIndex){
 		if (currIndex >= maxIndex) {
@@ -412,7 +475,6 @@ const startScreen = document.getElementById("start-screen");
 const startBtn = document.getElementById("start");
 const quickStartBtn = document.getElementById("quick-start");
 const gameArea = document.getElementById("game-area");
-const messageDisplay = document.getElementById("message-display");
 const board = document.getElementById("game-board");
 const player1 = document.getElementById("player-one");
 const player2 = document.getElementById("player-two");
