@@ -77,11 +77,13 @@ const start = {
 	},
 	translateColorSelections(){
 		app.player1 = {
+			num: 1,
 			fill: this.options[this.p1Select].fill,
 			light: this.options[this.p1Select].light
 		}
 
 		app.player2 = {
+			num: 2,
 			fill: this.options[this.p2Select].fill,
 			light: this.options[this.p2Select].light
 		}
@@ -94,7 +96,7 @@ const start = {
 		document.getElementById("start-screen").style.display = "none";
 		document.getElementById("game-area").style.display = "flex";
 
-		// transfer color selections to game object: 
+		// transfer color selections to display object: 
 		this.translateColorSelections();
 		app.init(); 
 	}
@@ -104,19 +106,14 @@ const start = {
 // game logic ----- 
 
 const app = {
+	player1: null,
+	player2: null,
 	turn: 0,
 	board: [],
 	occupied: 0,
-	emptyFill: "white",
-	player1: null,
-	player2: null,
-	message: "",
-	currPlayer: 1,
+	currPlayer: null,
 	active: false,
-	overlay: null,
 	firstGame: true,
-	overlayAnimationId: null,
-	dropAnimationOn: false,
 	colStarts: [],
 	rowStarts: [],
 	diagRightStarts: [],
@@ -127,14 +124,31 @@ const app = {
 
 		if (this.firstGame) {
 			this.initStarts();
-			this.printBoard();
+			display.printBoard();
 			this.activateBoard();
 			activateOverlayAnimation();
-			this.firstGame = false;			
+			this.firstGame = false;	
 		}
 
-		this.renderBoard();
+		display.renderBoard();
 		this.finishTurn();
+	},
+	resetBoard(){
+		this.board = [];
+		this.occupied = 0;
+		let index = 0; 
+		for (let y = 1; y <= 6; y++){
+			for (let x = 1; x <= 7; x++) {
+				this.board.push({
+					col: x,
+					row: y,
+					owner: 0,
+					id: `s-${x}-${y}`,
+					index: index
+				});
+				index++;
+			}
+		}
 	},
 	initStarts(){
 		for (let i = 0; i < 42; i++){
@@ -162,98 +176,58 @@ const app = {
 			})
 			space.addEventListener("mouseover", (evt)=>{
 				const column = evt.target.dataset.col; 
-				this.overlay = column; 
+				display.overlay = column; 
 			})
 			space.addEventListener("mouseout", ()=>{
-				this.overlay = null;
+				display.overlay = null;
 			})
 		})
 	}, 
-	resetBoard(){
-		this.board = [];
-		this.occupied = 0;
-		let index = 0; 
-		for (let y = 1; y <= 6; y++){
-			for (let x = 1; x <= 7; x++) {
-				this.board.push({
-					col: x,
-					row: y,
-					owner: 0,
-					id: `s-${x}-${y}`,
-					index: index
-				});
-				index++;
-			}
+	handleInput(divSelected){
+		if (!this.active){
+			return false;
 		}
-	},
-	printBoard(){
-		let index = 0; 
-		const gameBoardDisplay = document.getElementById("game-board");
-		
-		for (let y = 1; y <= 6; y++){
-			const newRow = document.createElement("div");
-			newRow.classList.add("row");
-			newRow.dataset.row = y;
 
-			for (let x = 1; x <= 7; x++){
-				const newSpace = document.createElement("div");
-				newSpace.classList.add("space");
-				newSpace.classList.add(`col-${x}`)
-				newSpace.dataset.col = x;
-				newSpace.dataset.index = index;
-				newSpace.id = `s-${x}-${y}`;
-				newRow.appendChild(newSpace);
-				index++;
-			}
+		if (!display.dropAnimationOn) {
+			const column = parseInt(divSelected.dataset.col);
+			const validSelection = this.insertSelection(column);
 
-			gameBoardDisplay.appendChild(newRow);
-		}
-	},
-	renderOverlay(){
-		const spacesToShade = this.board.filter(space => space.owner == 0 && space.col == this.overlay) 
-
-		spacesToShade.forEach(space => {
-			document.getElementById(space.id).style.background = this["player" + this.currPlayer].light;
-		})
-
-		const lastSpace = spacesToShade[spacesToShade.length - 1];
-
-		if (lastSpace) {
-			const lastSpaceDiv = document.getElementById(spacesToShade[spacesToShade.length - 1].id);
-			lastSpaceDiv.style.border = "3px solid slategray";
-		}
-	},
-	renderBoard(){
-		this.board.forEach(space => {
-			let fillColor = this.emptyFill;
-
-			if (space.owner == 1) {
-				fillColor = this.player1.fill;
-			} 
-			if (space.owner == 2) {
-				fillColor = this.player2.fill;
-			} 
-
-			const thisSpaceDiv = document.querySelector(`#s-${space.col}-${space.row}`);
-			thisSpaceDiv.style.background = fillColor;
-
-			if (space.owner) {
-				thisSpaceDiv.style.border = "3px solid black";
+			if (validSelection){
+				display.dropAnimationOn = true; 
+				display.dropAnimation(validSelection.col - 1, validSelection.index);
+				// note: when display.dropAnimation finishes, it calls app.finishTurn()
 			} else {
-				thisSpaceDiv.style.border = "3px solid lightgray";
-			}
-		})
+				return false;
+			}			
+		} 
 	},
-	displayMessage(){
-		const message = document.getElementById("message") 
-		message.textContent = this.message;
-		if (this.active) {
-			message.style.color = this["player" + this.currPlayer].fill; 
+	insertSelection(column){
+		// note: return false to indicate invalid selection 
+
+		const lowestOccupiedIndex = this.board.findIndex(space => space.col == column && space.owner > 0);
+		let index; 
+
+		if(lowestOccupiedIndex < 0){
+			index = column + 34;
+		} else if (lowestOccupiedIndex < 6) {
+			return false;
 		} else {
-			message.style.color = "black";
+			index = lowestOccupiedIndex - 7;
 		}
+
+		const selection = this.board[index];
+		selection.owner = this.currPlayer.num;
+		this.occupied++;
+		return selection;
 	},
-	// Endgame condition checking 
+	finishTurn(){
+		display.dropAnimationOn = false; 
+		display.renderBoard();
+		this.checkWin(); 
+		this.turn++;
+		const playerNumber = (this.turn % 2) || 2;
+		this.currPlayer = this[`player${playerNumber}`];
+	},
 	checkWin(){
 		const colsWin = this.checkWinCondition(this.colStarts, 7);
 		const rowsWin = this.checkWinCondition(this.rowStarts, 1);
@@ -286,7 +260,6 @@ const app = {
 				this.gameOver();
 			}			
 		}
-
 	},
 	checkWinCondition(startsArr, skipNum){
 		for (let i = 0; i < startsArr.length; i++){
@@ -324,11 +297,11 @@ const app = {
 		if (!pattern) {
 			newMsg = newMsg + " " + "The Game is a Tie!";
 		} else {
-			newMsg = newMsg + " " + "Player " + this.currPlayer + " Wins!";			
+			newMsg = newMsg + " " + "Player " + this.currPlayer.num + " Wins!";			
 		}
 
-		this.message = newMsg;
-		this.displayMessage();
+		display.message = newMsg;
+		display.printMessage();
 
 		const winningSpaces = [];
 
@@ -340,13 +313,98 @@ const app = {
 			});
 		}
 
-		this.displayEndGame(winningSpaces);
+		display.endGamePattern(winningSpaces);
 	},
-	displayEndGame(winningSpaces){
+	newGame(){
+		document.querySelector("#message-display div").remove();
+		this.turn = 0; 
+		this.currPlayer = this.player1;
+		this.active = true;
+		display.message = "";
+		display.printMessage();
+		this.init();
+	}
+}
 
-		this.board.forEach(space => {
+
+const display = {
+	emptyFill: "white",
+	message: "",
+	overlay: null,
+	overlayAnimationId: null,
+	dropAnimationOn: false,
+	printBoard(){
+		let index = 0; 
+		const gameBoardDisplay = document.getElementById("game-board");
+		
+		for (let y = 1; y <= 6; y++){
+			const newRow = document.createElement("div");
+			newRow.classList.add("row");
+			newRow.dataset.row = y;
+
+			for (let x = 1; x <= 7; x++){
+				const newSpace = document.createElement("div");
+				newSpace.classList.add("space");
+				newSpace.classList.add(`col-${x}`)
+				newSpace.dataset.col = x;
+				newSpace.dataset.index = index;
+				newSpace.id = `s-${x}-${y}`;
+				newRow.appendChild(newSpace);
+				index++;
+			}
+
+			gameBoardDisplay.appendChild(newRow);
+		}
+	},
+	renderBoard(){
+		app.board.forEach(space => {
+			let fillColor = this.emptyFill;
+
+			if (space.owner == 1) {
+				fillColor = app.player1.fill;
+			} 
+			if (space.owner == 2) {
+				fillColor = app.player2.fill;
+			} 
+
+			const thisSpaceDiv = document.querySelector(`#s-${space.col}-${space.row}`);
+			thisSpaceDiv.style.background = fillColor;
+
+			if (space.owner) {
+				thisSpaceDiv.style.border = "3px solid black";
+			} else {
+				thisSpaceDiv.style.border = "3px solid lightgray";
+			}
+		})
+	},
+	renderOverlay(){
+		const spacesToShade = app.board.filter(space => space.owner == 0 && space.col == this.overlay) 
+
+		spacesToShade.forEach(space => {
+			document.getElementById(space.id).style.background = app.currPlayer.light;
+		})
+
+		const lastSpace = spacesToShade[spacesToShade.length - 1];
+
+		if (lastSpace) {
+			const lastSpaceDiv = document.getElementById(spacesToShade[spacesToShade.length - 1].id);
+			lastSpaceDiv.style.border = "3px solid slategray";
+		}
+	},
+	printMessage(){
+		const messageElement = document.getElementById("message") 
+		messageElement.textContent = this.message;
+		if (app.active) {
+			messageElement.style.color = app.currPlayer.fill; 
+		} else {
+			messageElement.style.color = "black";
+		}
+	},
+	endGamePattern(winningSpaces){
+
+		app.board.forEach(space => {
 			if (space.owner != 0 && !winningSpaces.includes(space.index)){
-				document.getElementById(space.id).style.background = this[`player${space.owner}`].light;
+				document.getElementById(space.id).style.background = app[`player${space.owner}`].light;
 			}
 		})
 
@@ -354,7 +412,7 @@ const app = {
 		newGameBtn.textContent = "Play Again";
 		newGameBtn.classList.add("smallBtn");
 		newGameBtn.addEventListener("click", ()=>{
-			this.newGame()
+			app.newGame()
 		})
 
 		const quitBtn = document.createElement("button");
@@ -370,65 +428,13 @@ const app = {
 		btnDiv.appendChild(quitBtn);
 		document.getElementById("message-display").appendChild(btnDiv);
 	},
-	newGame(){
-		document.querySelector("#message-display div").remove();
-		this.turn = 0; 
-		this.currPlayer = 1;
-		this.active = true;
-		this.message = "";
-		this.displayMessage();
-		this.init();
-	},
-	handleInput(divSelected){
-		if (!this.active){
-			return false;
-		}
-
-		if (!this.dropAnimationOn) {
-			const column = parseInt(divSelected.dataset.col);
-			const validSelection = this.insertSelection(column);
-
-			if (validSelection){
-				this.dropAnimationOn = true; 
-				this.dropAnimation(validSelection.col - 1, validSelection.index);
-			} else {
-				return false;
-			}			
-		} 
-	},
-	insertSelection(column){
-		// note: return false to indicate invalid selection 
-
-		const lowestOccupiedIndex = this.board.findIndex(space => space.col == column && space.owner > 0);
-		let index; 
-
-		if(lowestOccupiedIndex < 0){
-			index = column + 34;
-		} else if (lowestOccupiedIndex < 6) {
-			return false;
-		} else {
-			index = lowestOccupiedIndex - 7;
-		}
-
-		const selection = this.board[index];
-		selection.owner = this.currPlayer;
-		this.occupied++;
-		return selection;
-	},
-	finishTurn(){
-		this.dropAnimationOn = false; 
-		this.renderBoard();
-		this.checkWin(); 
-		this.turn++;
-		this.currPlayer = (this.turn % 2) || 2;
-	},
 	dropAnimation(currIndex, maxIndex){
 		if (currIndex >= maxIndex) {
-			this.finishTurn(); 
+			app.finishTurn(); 
 			return true;
 		} else {
-			const color = this["player" + this.currPlayer].fill;
-			const passingDiv = document.getElementById(this.board[currIndex].id);
+			const color = app.currPlayer.fill;
+			const passingDiv = document.getElementById(app.board[currIndex].id);
 
 			passingDiv.style.background = color;
 
@@ -451,24 +457,24 @@ const playerTwoDropdown = document.getElementById("player-2");
 
 // global functions ----- 
 
-function renderOverlay(){
-	if(app.active && !app.dropAnimationOn) {
-		if(app.overlay) {
-			app.renderOverlay();
+function animateOverlay(){
+	if(app.active && !display.dropAnimationOn) {
+		if(display.overlay) {
+			display.renderOverlay();
 		} else {
-			app.renderBoard();
+			display.renderBoard();
 		}
 	}
 
-	window.requestAnimationFrame(renderOverlay)
+	window.requestAnimationFrame(animateOverlay)
 }
 
 function activateOverlayAnimation(){
-	app.overlayAnimationId = window.requestAnimationFrame(renderOverlay);
+	display.overlayAnimationId = window.requestAnimationFrame(animateOverlay);
 }
 
 function deactivateOverlayAnimation(){
-	window.cancelAnimationFrame(this.overlayAnimationId);
+	window.cancelAnimationFrame(display.overlayAnimationId);
 }
 
 
